@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Employee Dashboard</title>
+<link rel="stylesheet" href="./css/index.css">
+</head>
+
+<body>
+
+<h1>Employee Performance Dashboard</h1>
+
+<div class="admin-tools">
+
+<input id="empName" placeholder="Employee Name">
+
+<button onclick="generateLink()">Generate Link</button>
+
+<button onclick="resetVotes()">Reset Month</button>
+
+<button onclick="exportExcel()">Export Excel</button>
+
+</div>
+
+<p id="linkResult"></p>
+
+<h2>Employee Cards</h2>
+
+<div id="employeeCards" class="card-grid"></div>
+
+<h2>Category Leaders</h2>
+
+<div id="leaderboard"></div>
+
+<h2 id="winner"></h2>
+
+<script src="./js/index.js"></script>
+<script>
+loadDashboard()
+</script>
+
+</body>
+</html>
