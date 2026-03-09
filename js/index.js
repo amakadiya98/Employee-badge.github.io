@@ -1,42 +1,129 @@
 const params = new URLSearchParams(window.location.search)
-const employee = params.get("employee")
+const voter = params.get("voter")
 
-if(employee && document.getElementById("employeeTitle")){
-employeeTitle.innerText = "Vote for " + employee
+function getEmployees(){
+return JSON.parse(localStorage.getItem("employees")) || []
 }
 
-function submitVote(){
+function saveEmployees(list){
+localStorage.setItem("employees",JSON.stringify(list))
+}
 
-if(localStorage.getItem("voted_"+employee)){
+/* ADD EMPLOYEE */
+
+function addEmployee(){
+
+let name=document.getElementById("empName").value.toLowerCase()
+
+let employees=getEmployees()
+
+if(!employees.includes(name)){
+employees.push(name)
+saveEmployees(employees)
+alert("Employee added")
+}else{
+alert("Employee already exists")
+}
+
+}
+
+/* GENERATE VOTING LINK */
+
+function generateLink(){
+
+let name=document.getElementById("linkName").value
+
+let base=window.location.origin+window.location.pathname.replace("admin.html","index.html")
+
+let link=base+"?voter="+name
+
+document.getElementById("linkResult").innerText=link
+
+}
+
+/* LOAD VOTING PAGE */
+
+function loadVoting(){
+
+let employees=getEmployees()
+
+let html=""
+
+employees.forEach(emp=>{
+
+let disabled= emp===voter ? "disabled" : ""
+
+html+=`
+
+<div class="employee-card">
+
+<h3>${emp} ${emp===voter?"(You)":""}</h3>
+
+Work Quality
+<input type="range" min="1" max="5" id="${emp}_work" ${disabled}>
+
+Discipline
+<input type="range" min="1" max="5" id="${emp}_discipline" ${disabled}>
+
+Behavior
+<input type="range" min="1" max="5" id="${emp}_behavior" ${disabled}>
+
+Contribution
+<input type="range" min="1" max="5" id="${emp}_contribution" ${disabled}>
+
+</div>
+`
+})
+
+if(document.getElementById("employeeVoting"))
+document.getElementById("employeeVoting").innerHTML=html
+
+}
+
+/* SUBMIT VOTES */
+
+function submitVotes(){
+
+if(localStorage.getItem("voted_"+voter)){
 msg.innerText="You already voted"
 return
 }
 
-let data = JSON.parse(localStorage.getItem("votes")) || {}
+let employees=getEmployees()
 
-if(!data[employee]){
-data[employee] = {work:0,discipline:0,behavior:0,contribution:0,votes:0}
+let data=JSON.parse(localStorage.getItem("votes")) || {}
+
+employees.forEach(emp=>{
+
+if(emp===voter) return
+
+if(!data[emp]){
+data[emp]={work:0,discipline:0,behavior:0,contribution:0,votes:0}
 }
 
-data[employee].work += Number(work.value)
-data[employee].discipline += Number(discipline.value)
-data[employee].behavior += Number(behavior.value)
-data[employee].contribution += Number(contribution.value)
+data[emp].work+=Number(document.getElementById(emp+"_work").value)
+data[emp].discipline+=Number(document.getElementById(emp+"_discipline").value)
+data[emp].behavior+=Number(document.getElementById(emp+"_behavior").value)
+data[emp].contribution+=Number(document.getElementById(emp+"_contribution").value)
 
-data[employee].votes++
+data[emp].votes++
+
+})
 
 localStorage.setItem("votes",JSON.stringify(data))
+localStorage.setItem("voted_"+voter,true)
 
-localStorage.setItem("voted_"+employee,true)
+msg.innerText="Votes submitted successfully 🎉"
 
-msg.innerText="Vote Submitted 🎉"
 }
+
+/* DASHBOARD */
 
 function loadDashboard(){
 
-let data = JSON.parse(localStorage.getItem("votes")) || {}
+let data=JSON.parse(localStorage.getItem("votes")) || {}
 
-let cardHTML=""
+let html=""
 let winner=""
 let bestScore=0
 
@@ -63,12 +150,13 @@ bestScore=avg
 winner=emp
 }
 
-if(work>leaders.work.score){leaders.work={name:emp,score:work}}
-if(discipline>leaders.discipline.score){leaders.discipline={name:emp,score:discipline}}
-if(behavior>leaders.behavior.score){leaders.behavior={name:emp,score:behavior}}
-if(contribution>leaders.contribution.score){leaders.contribution={name:emp,score:contribution}}
+if(work>leaders.work.score) leaders.work={name:emp,score:work}
+if(discipline>leaders.discipline.score) leaders.discipline={name:emp,score:discipline}
+if(behavior>leaders.behavior.score) leaders.behavior={name:emp,score:behavior}
+if(contribution>leaders.contribution.score) leaders.contribution={name:emp,score:contribution}
 
-cardHTML+=`
+html+=`
+
 <div class="employee-card">
 
 <h3>${emp}</h3>
@@ -91,9 +179,12 @@ Contribution ${contribution}%
 `
 }
 
-employeeCards.innerHTML=cardHTML
+if(document.getElementById("employeeCards"))
+document.getElementById("employeeCards").innerHTML=html
 
-leaderboard.innerHTML=`
+if(document.getElementById("leaderboard"))
+document.getElementById("leaderboard").innerHTML=`
+
 Work Quality Leader: ${leaders.work.name} (${leaders.work.score}%)
 <br>
 Discipline Leader: ${leaders.discipline.name} (${leaders.discipline.score}%)
@@ -103,16 +194,9 @@ Behavior Leader: ${leaders.behavior.name} (${leaders.behavior.score}%)
 Contribution Leader: ${leaders.contribution.name} (${leaders.contribution.score}%)
 `
 
-winner.innerHTML="🏆 Employee of the Month: "+winner
-}
+if(document.getElementById("winner"))
+document.getElementById("winner").innerText="🏆 Employee of the Month: "+winner
 
-function generateLink(){
-
-let name=document.getElementById("empName").value
-
-let link=window.location.origin+window.location.pathname.replace("admin.html","index.html")+"?employee="+name
-
-linkResult.innerText=link
 }
 
 function resetVotes(){
@@ -147,3 +231,7 @@ a.download="employee_votes.csv"
 a.click()
 
 }
+
+/* AUTO LOAD */
+
+loadVoting()
